@@ -2,6 +2,7 @@
 #include <cmath>
 #include <vector>
 #include <fstream>
+#include <iostream>
 
 using namespace ege;
 
@@ -35,7 +36,8 @@ struct Point{
 
 double minDiff;
 double MaxTime, LightingTime;
-bool DrawPoint, ShowStep;
+bool DrawPoint, ShowStep, NeedBlur;
+int BlurArg1, BlurArg2, OnlyBlurOne;
 
 void drawLighting(const Point &beg, const Point &end, const double diff, PIMAGE img)
 {
@@ -141,7 +143,12 @@ void mainloop()
         }
         if (isShow){
             if (lightingTime < 0.0) {
-                cleardevice(img);
+                if(NeedBlur) {
+                    imagefilter_blurring(img, BlurArg1, BlurArg2);
+                }
+                else {
+                    cleardevice(img);
+                }
                 drawLighting(ShowStep ? end - (end - beg) * leftTime / MaxTime : beg, end, 100, img);
                 lightingTime = LightingTime;
             }
@@ -159,6 +166,9 @@ void mainloop()
                 beg = end;
                 end = findNearPoint(beg, pvec, paintedVec);
                 paintedVec.push_back(end);
+                if(NeedBlur && OnlyBlurOne){
+                    cleardevice(img);
+                }
             }
         }
     }
@@ -172,7 +182,12 @@ int main()
     setbkcolor(EGERGB(0, 0, 0));
     setcolor(EGERGB(0, 0, 208));
     std::ifstream fin("config.ini", std::fstream::in);
-    fin >> minDiff >> MaxTime >> LightingTime >> DrawPoint >> ShowStep;
+    fin >> minDiff >> MaxTime >> LightingTime
+        >> DrawPoint >> ShowStep >> NeedBlur
+        >> BlurArg1 >> BlurArg2 >> OnlyBlurOne;
+    std::cout << minDiff << ' ' << MaxTime << ' ' << LightingTime << '\n'
+              << DrawPoint << ' ' << ShowStep << ' ' << NeedBlur << '\n'
+              << BlurArg1 << ' ' << BlurArg2 << ' ' << OnlyBlurOne << std::endl;
     fin.close();
     mainloop();
     closegraph();
